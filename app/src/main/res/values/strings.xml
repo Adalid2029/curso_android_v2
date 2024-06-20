@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">Curso Android v2</string>
+    <string name="nombre">Escriba su nombre</string>
+    <string name="direccion">Escriba su direccion</string>
+    <string name="edad">Escriba su Edad</string>
+    <string name="adicionar">Adicionar</string>
 </resources>
