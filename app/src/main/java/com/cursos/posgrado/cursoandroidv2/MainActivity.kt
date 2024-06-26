@@ -34,6 +34,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var app: PersonaApp
     private lateinit var personaAdapter: PersonaAdapter
+    private var editandoPersona: Persona? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         app = applicationContext as PersonaApp
@@ -54,21 +55,43 @@ class MainActivity : AppCompatActivity() {
         personaViewModel.todasPersonas.observe(this, { personas ->
             personaAdapter.setPersonas(personas)
         })
-        btnAdicionar.setOnClickListener{
+        btnAdicionar.setOnClickListener {
             val nombre = editTextNombre.text.toString()
-            val edad = editTextEdad.text.toString().toInt()
+            val edad = editTextEdad.text.toString()
+                .toInt()  // Bug solucionar o verificar si tiene cadena vacia
             val direccion = editTextDireccion.text.toString()
-            lifecycleScope.launch (Dispatchers.IO){
-                personaDao.insert(Persona(0,nombre, edad, direccion))
-                val actualizacionPersona = personaDao.getAll()
-                runOnUiThread {
-                    personaAdapter.setPersonas(actualizacionPersona)
-                }
-            }
-            editTextNombre.text.clear()
-            editTextEdad.text.clear()
-            editTextDireccion.text.clear()
+            if (nombre.isNotEmpty() && direccion.isNotEmpty() && edad != null) {
+                lifecycleScope.launch(Dispatchers.IO) {
+                    if (editandoPersona == null) {
+                        Log.d("MainActivity", "Adicionando ${nombre}, ${edad}, ${direccion}")
+                        personaDao.insert(Persona(0, nombre, edad, direccion))
+                    } else {
+                        Log.d("MainActivity", "Actualizando ${nombre}, ${edad}, ${direccion}")
+                        val personaActualizada = editandoPersona!!.copy(
+                            nombre = nombre,
+                            edad = edad,
+                            direccion = direccion
+                        )
+                        personaDao.update(personaActualizada)
+                        editandoPersona = null
+                    }
 
+                    val actualizacionPersona = personaDao.getAll()
+                    runOnUiThread {
+                        personaAdapter.setPersonas(actualizacionPersona)
+                    }
+                }
+                editTextNombre.text.clear()
+                editTextEdad.text.clear()
+                editTextDireccion.text.clear()
+            }
+        }
+        personaAdapter.setOnEditClickListener { persona ->
+            Log.d("MainActivity", "Estamos tratando de editar una fila")
+            editTextNombre.setText(persona.nombre)
+            editTextDireccion.setText(persona.direccion)
+            editTextEdad.setText(persona.edad.toString())
+            editandoPersona = persona
         }
 
 
